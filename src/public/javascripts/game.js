@@ -12,47 +12,72 @@ function startGame() {
 	goButton.addEventListener('click', () => {
 		introDiv.classList.add('hidden');
 		gameDiv.classList.remove('hidden');
-		
-		const dice = getInitialDice(input);
-		console.log(dice);
 	});
 
 	startButton.addEventListener('click', () => {
+		const rollButton = document.getElementById('roll');
+		rollButton.disabled = false;
+		startButton.disabled = true;
 
+		const inputDice = getInputDice(input);
+
+		playGame(inputDice);
 	});
-
-
 }
 
-function handleError() {
-	const errorDiv = document.getElementById('error-message')
-	errorDiv.classList.add('hidden');
+function playGame(inputDice, playerSelected = [], computerSelected = []) {
+	const computerDice = rollDice(inputDice, 5);
+	const computerScore = computerMove(inputDice, computerDice, computerSelected);
+
+	const playerDice = rollDice(inputDice, 5);
+	const playerScore = playerSelected.reduce((sum, value) => {
+		return value === 3 ? sum : value + sum;
+	}, 0);
+
+	updateScore(playerSelected, computerSelected, playerScore, computerScore);
 }
 
-function getInitialDice(input) {
+function computerMove(inputDice, computerDice, computerSelected) {
+	while (computerDice.length > 0) {
+		const selected = computerDice.includes(3) ?
+			computerDice.splice(computerDice.indexOf(3), 1)[0] : computerDice.splice(computerDice.indexOf(Math.min(...computerDice)), 1)[0];
+		computerSelected.push(selected);
+		computerDice = rollDice(inputDice, computerDice.length);
+	}
+
+	const computerScore = computerSelected.reduce((sum, value) => {
+		return value === 3 ? sum : sum + value;
+	}, 0);
+
+	return computerScore;
+}
+
+function updateScore(playerSelected, computerSelected, playerScore, computerScore) {
+	const computerScoreDiv = document.getElementById('computerScore');
+	const playerScoreDiv = document.getElementById('playerScore');
+
+	computerScoreDiv.textContent = `Computer: [${computerSelected}] = ${computerScore}`;
+	playerScoreDiv.textContent = `You: [${playerSelected}] = ${playerScore}`;
+}
+
+function rollDice(inputDice, amount) {
 	let dice = [];
 
-	if (!input.value) {
-		dice = rollDice(5);
-	} else {
-		const rawValues = input.value.split(',').map(value => { return Number(value) });
-
-		while (rawValues.length > 0) {
-			dice.push(rawValues.splice(0, 5));
-		}
-
-		if (dice[dice.length - 1].length < 5) {
-			dice[dice.length - 1].push.apply(dice[dice.length - 1], rollDice(5 - dice[dice.length - 1].length));
+	if (inputDice && inputDice.length > 0) {
+		if (inputDice.length < amount) {
+			dice.push(...inputDice.splice(0, inputDice.length));
+		} else {
+			dice.push(...inputDice.splice(0, amount));
 		}
 	}
 
-	return dice;
-}
+	console.log(dice);
 
-function rollDice(amount) {
-	const dice = [];
+	if (dice.length == amount) {
+		return dice;
+	}
 
-	for (let i = 0; i < amount; i++) {
+	for (let i = dice.length; i < amount; i++) {
 		dice.push(rollDie());
 	}
 
@@ -61,6 +86,10 @@ function rollDice(amount) {
 
 function rollDie() {
 	return Math.floor(Math.random() * 6) + 1;
+}
+
+function getInputDice(input) {
+	return input.value.split(',').map(value => { return Number(value) });
 }
 
 function drawBoard() {
@@ -103,6 +132,26 @@ function drawBoard() {
 	buttonsDiv.appendChild(pinButtonDiv);
 
 	gameDiv.appendChild(buttonsDiv);
+
+	// create scores
+
+	const scoresDiv = document.createElement('div');
+	scoresDiv.id = 'scores';
+
+	const computerScoreDiv = document.createElement('p');
+	computerScoreDiv.id = 'computerScore';
+	scoresDiv.appendChild(computerScoreDiv);
+
+	const playerScoreDiv = document.createElement('p');
+	playerScoreDiv.id = 'playerScore';
+	scoresDiv.appendChild(playerScoreDiv);
+
+	gameDiv.appendChild(scoresDiv);
+}
+
+function handleError() {
+	const errorDiv = document.getElementById('error-message')
+	errorDiv.classList.add('hidden');
 }
 
 document.addEventListener('DOMContentLoaded', (event) => { 
