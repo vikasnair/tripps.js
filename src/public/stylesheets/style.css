@@ -39,3 +39,20 @@ a {
 .fixed {
 	background-color: darkgrey;
 }
+
+#result {
+	height: 50px;
+	width: 100px;
+}
+
+.win {
+	background-color: green;
+}
+
+.lose {
+	background-color: red;
+}
+
+.tie {
+	background-color: yellow;
+}
