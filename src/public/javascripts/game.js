@@ -8,6 +8,13 @@ function startGame() {
 	const input = document.getElementById('diceValues');
 	const goButton = introDiv.getElementsByTagName('button')[0];
 	const startButton = document.getElementById('start');
+	const rollButton = document.getElementById('roll');
+	const pinButton = document.getElementById('pin');
+	const closeButton = document.getElementsByClassName('closeButton')[0];
+
+	const inputDice = getInputDice(input);
+	let playerDice = Array(5);
+	const playerSelected = Array(playerDice.length).fill(false);
 
 	goButton.addEventListener('click', () => {
 		introDiv.classList.add('hidden');
@@ -15,29 +22,124 @@ function startGame() {
 	});
 
 	startButton.addEventListener('click', () => {
-		const rollButton = document.getElementById('roll');
 		rollButton.disabled = false;
 		startButton.disabled = true;
 
-		const inputDice = getInputDice(input);
+		setupGame(inputDice);
+	});
 
-		playGame(inputDice);
+	rollButton.addEventListener('click', () => {
+		rollButton.disabled = true;
+		pinButton.disabled = false;
+		playerRoll(inputDice, playerSelected, playerDice);
+	});
+
+	pinButton.addEventListener('click', () => {
+		pinButton.disabled = true;
+		rollButton.disabled = false;
+		playerPin(playerSelected, playerDice);
+	});
+
+	closeButton.addEventListener('click', () => {
+		toggleError();
 	});
 }
 
-function playGame(inputDice, playerSelected = [], computerSelected = []) {
-	const computerDice = rollDice(inputDice, 5);
-	const computerScore = computerMove(inputDice, computerDice, computerSelected);
-
-	const playerDice = rollDice(inputDice, 5);
-	const playerScore = playerSelected.reduce((sum, value) => {
-		return value === 3 ? sum : value + sum;
+function playerRoll(inputDice, playerSelected, playerDice) {
+	const numUnpinned = playerSelected.reduce((sum, selected) => {
+		return selected ? sum : sum + 1;
 	}, 0);
 
-	updateScore(playerSelected, computerSelected, playerScore, computerScore);
+	for (let i = 0; i < 5; i++) {
+		if (!playerSelected[i]) {
+			playerDice[i] = rollDie();
+		}
+	}
+
+	console.log(playerDice);
+	updateBoard(playerDice, playerSelected);
 }
 
-function computerMove(inputDice, computerDice, computerSelected) {
+function playerPin(playerSelected, playerDice) {
+	const diceDiv = document.getElementById('dice');
+	let numPinned = 0;
+	
+	diceDiv.childNodes.forEach((dieDiv, i) => {
+		if (dieDiv.classList.contains('pinned') && !dieDiv.classList.contains('fixed')) {
+			playerSelected[i] = true;
+			dieDiv.classList.add('fixed');
+			numPinned += 1;
+		}
+	});
+
+	if (numPinned == 0) {
+		toggleError(); // TODO: Implement error handling
+		
+		const rollButton = document.getElementById('roll');
+		const pinButton = document.getElementById('pin');
+		rollButton.disabled = true;
+		pinButton.disabled = false;
+	} else {
+		const playerScore = playerDice.reduce((sum, value, i) => {
+			return playerSelected[i] ? (value === 3 ? sum : sum + value) : sum;
+		}, 0);
+
+		diceDiv.childNodes.forEach((dieDiv, i) => {
+			if (!dieDiv.classList.contains('pinned')) {
+				dieDiv.textContent = '';
+			}
+		});
+
+		updatePlayerScore(playerSelected, playerDice, playerScore);
+	}
+}
+
+function updateBoard(playerDice, playerSelected) {
+	for (let i = 0; i < 5; i++) {
+		const dieDiv = document.getElementById(`die${i}`);
+		dieDiv.textContent = String(playerDice[i]);
+	}
+}
+
+function updatePlayerScore(playerSelected, playerDice, playerScore) {
+	const playerScoreDiv = document.getElementById('playerScore');
+	playerScoreDiv.textContent = `You: [${playerDice.filter((die, i) => { return playerSelected[i] })}] = ${playerScore}`;
+}
+
+function updateComputerScore(computerSelected, computerScore) {
+	const computerScoreDiv = document.getElementById('computerScore');
+	computerScoreDiv.textContent = `Computer: [${computerSelected}] = ${computerScore}`;
+
+}
+
+// function playerMove(inputDice, playerDice, playerSelected) {
+// 	let unpinned = 0;
+
+// 	for (let key in playerSelected) {
+// 		if (!playerSelected[key]) {
+// 			delete playerSelected[key];
+// 			unpinned += 1;
+// 		}
+// 	}
+
+// 	const roll = rollDice(inputDice, unpinned);
+
+// 	roll.forEach(die => {
+// 		playerSelected[die] = false;
+// 	});
+
+// 	// return playerScore;
+// }
+
+function setupGame(inputDice) {
+	const computerSelected = [];
+	const computerScore = computerMove(inputDice, computerSelected);
+	updateComputerScore(computerSelected, computerScore);
+}
+
+function computerMove(inputDice, computerSelected) {
+	let computerDice = rollDice(inputDice, 5);
+
 	while (computerDice.length > 0) {
 		const selected = computerDice.includes(3) ?
 			computerDice.splice(computerDice.indexOf(3), 1)[0] : computerDice.splice(computerDice.indexOf(Math.min(...computerDice)), 1)[0];
@@ -52,14 +154,6 @@ function computerMove(inputDice, computerDice, computerSelected) {
 	return computerScore;
 }
 
-function updateScore(playerSelected, computerSelected, playerScore, computerScore) {
-	const computerScoreDiv = document.getElementById('computerScore');
-	const playerScoreDiv = document.getElementById('playerScore');
-
-	computerScoreDiv.textContent = `Computer: [${computerSelected}] = ${computerScore}`;
-	playerScoreDiv.textContent = `You: [${playerSelected}] = ${playerScore}`;
-}
-
 function rollDice(inputDice, amount) {
 	let dice = [];
 
@@ -70,8 +164,6 @@ function rollDice(inputDice, amount) {
 			dice.push(...inputDice.splice(0, amount));
 		}
 	}
-
-	console.log(dice);
 
 	if (dice.length == amount) {
 		return dice;
@@ -89,7 +181,7 @@ function rollDie() {
 }
 
 function getInputDice(input) {
-	return input.value.split(',').map(value => { return Number(value) });
+	return input.value ? input.value.split(',').map(value => { return Number(value) }) : [];
 }
 
 function drawBoard() {
@@ -102,8 +194,21 @@ function drawBoard() {
 
 	for (let i = 0; i < 5; i++) {
 		const dieDiv = document.createElement('div');
+		dieDiv.id = `die${i}`;
 		dieDiv.classList.add('die');
 		dieDiv.style.border = 'medium solid black'
+
+		dieDiv.addEventListener('click', () => {
+			const startButton = document.getElementById('start');
+			const rollButton = document.getElementById('roll');
+
+			if (startButton.disabled && rollButton.disabled && !dieDiv.classList.contains('fixed')) {
+				dieDiv.classList.toggle('pinned');
+			} else {
+				toggleError(); // TODO: implement error handling
+			}
+		});
+
 		diceDiv.appendChild(dieDiv);
 	}
 
@@ -114,22 +219,22 @@ function drawBoard() {
 	const buttonsDiv = document.createElement('div');
 	buttonsDiv.id = 'buttons';
 
-	const startButtonDiv = document.createElement('button');
-	startButtonDiv.textContent = 'Start';
-	startButtonDiv.id = 'start';
-	buttonsDiv.appendChild(startButtonDiv);
+	const startButton = document.createElement('button');
+	startButton.textContent = 'Start';
+	startButton.id = 'start';
+	buttonsDiv.appendChild(startButton);
 
-	const rollButtonDiv = document.createElement('button');
-	rollButtonDiv.textContent = 'Roll';
-	rollButtonDiv.id = 'roll';
-	rollButtonDiv.disabled = true;
-	buttonsDiv.appendChild(rollButtonDiv);
+	const rollButton = document.createElement('button');
+	rollButton.textContent = 'Roll';
+	rollButton.id = 'roll';
+	rollButton.disabled = true;
+	buttonsDiv.appendChild(rollButton);
 
-	const pinButtonDiv = document.createElement('button');
-	pinButtonDiv.textContent = 'Pin';
-	pinButtonDiv.id = 'pin';
-	pinButtonDiv.disabled = true;
-	buttonsDiv.appendChild(pinButtonDiv);
+	const pinButton = document.createElement('button');
+	pinButton.textContent = 'Pin';
+	pinButton.id = 'pin';
+	pinButton.disabled = true;
+	buttonsDiv.appendChild(pinButton);
 
 	gameDiv.appendChild(buttonsDiv);
 
@@ -138,23 +243,23 @@ function drawBoard() {
 	const scoresDiv = document.createElement('div');
 	scoresDiv.id = 'scores';
 
-	const computerScoreDiv = document.createElement('p');
-	computerScoreDiv.id = 'computerScore';
-	scoresDiv.appendChild(computerScoreDiv);
+	const computerScore = document.createElement('p');
+	computerScore.id = 'computerScore';
+	scoresDiv.appendChild(computerScore);
 
-	const playerScoreDiv = document.createElement('p');
-	playerScoreDiv.id = 'playerScore';
-	scoresDiv.appendChild(playerScoreDiv);
+	const playerScore = document.createElement('p');
+	playerScore.id = 'playerScore';
+	scoresDiv.appendChild(playerScore);
 
 	gameDiv.appendChild(scoresDiv);
 }
 
-function handleError() {
+function toggleError() {
 	const errorDiv = document.getElementById('error-message')
-	errorDiv.classList.add('hidden');
+	errorDiv.classList.toggle('hidden');
 }
 
 document.addEventListener('DOMContentLoaded', (event) => { 
-	handleError();
+	toggleError();
 	startGame();
 });

@@ -18,6 +18,10 @@ a {
 	width: 50px;
 }
 
+.die:hover {
+	background-color: lightgreen;
+}
+
 #buttons button {
 	margin: 0.25%;
 	height: 25px;
@@ -26,4 +30,12 @@ a {
 
 #buttons {
 	clear: left;
+}
+
+.pinned {
+	background-color: lightgrey;
+}
+
+.fixed {
+	background-color: darkgrey;
 }
