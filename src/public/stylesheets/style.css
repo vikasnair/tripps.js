@@ -1,10 +1,17 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+	font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+	margin: 0 auto;
 }
 
-a {
-  color: #00B7FF;
+#content {
+	margin-top: 5%;
+}
+
+#content h1, #intro, #game, #dice {;
+	margin: 0 auto;
+	margin-top: 2%;
+	width: 50%;
+	text-align: center;
 }
 
 .hidden {
@@ -13,7 +20,7 @@ a {
 
 .die {
 	float: left;
-	margin: 0.5%;
+	margin: 2.5%;
 	height: 50px;
 	width: 50px;
 }
@@ -22,14 +29,15 @@ a {
 	background-color: lightgreen;
 }
 
+
+#buttons {
+	clear: left;
+}
+
 #buttons button {
 	margin: 0.25%;
 	height: 25px;
 	width: 50px;
-}
-
-#buttons {
-	clear: left;
 }
 
 .pinned {
@@ -55,4 +63,23 @@ a {
 
 .tie {
 	background-color: yellow;
+}
+
+.overlay {
+	z-index: 100;
+	position: fixed;
+	margin: auto;
+	top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+	height: 100%;
+	width: 100%;
+	text-align: center;
+	color: red;
+	background-color: lightgrey;
+}
+
+.overlay p {
+	margin-top: 25%;
 }

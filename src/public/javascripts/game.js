@@ -75,7 +75,7 @@ function playerPin(playerSelected, playerDice, computerScore) {
 	});
 
 	if (numPinned == 0) {
-		toggleError(); // TODO: Implement error handling
+		toggleError('Choose at least one die to pin!');
 		
 		const rollButton = document.getElementById('roll');
 		const pinButton = document.getElementById('pin');
@@ -208,7 +208,7 @@ function drawBoard() {
 			if (startButton.disabled && rollButton.disabled && !dieDiv.classList.contains('fixed')) {
 				dieDiv.classList.toggle('pinned');
 			} else {
-				toggleError(); // TODO: implement error handling
+				toggleError('Cannot pin.');
 			}
 		});
 
@@ -269,9 +269,14 @@ function drawBoard() {
 	gameDiv.appendChild(resultDiv);
 }
 
-function toggleError() {
+function toggleError(message) {
 	const errorDiv = document.getElementById('error-message')
 	errorDiv.classList.toggle('hidden');
+
+	if (message) {
+		const messageDiv = errorDiv.getElementsByTagName('p')[0];
+		messageDiv.textContent = message;
+	}
 }
 
 document.addEventListener('DOMContentLoaded', (event) => { 
