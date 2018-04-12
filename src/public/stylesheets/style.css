@@ -7,7 +7,7 @@ body {
 	margin-top: 5%;
 }
 
-#content h1, #intro, #game, #dice {;
+#content h1, #intro, #game, #dice, #result {
 	margin: 0 auto;
 	margin-top: 2%;
 	width: 50%;
@@ -23,6 +23,7 @@ body {
 	margin: 2.5%;
 	height: 50px;
 	width: 50px;
+	font-size: 3em;
 }
 
 .die:hover {

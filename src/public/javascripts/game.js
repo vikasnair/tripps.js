@@ -115,9 +115,6 @@ function gameOver(playerScore, computerScore) {
 		resultDiv.classList.add('win');
 	}
 
-	const startButton = document.getElementById('start');
-	startButton.disabled = false;
-
 	const rollButton = document.getElementById('roll');
 	rollButton.disabled = true;
 }
