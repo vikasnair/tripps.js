@@ -1,110 +1,67 @@
 // vikas was here!
 
-function startGame() {
-	drawBoard();
+function toggleError(message) {
+	const errorDiv = document.getElementById('error-message');
+	errorDiv.classList.toggle('hidden');
 
-	const gameDiv = document.getElementById('game');
-	const introDiv = document.getElementById('intro');
-	const input = document.getElementById('diceValues');
-	const goButton = introDiv.getElementsByTagName('button')[0];
-	const startButton = document.getElementById('start');
-	const rollButton = document.getElementById('roll');
-	const pinButton = document.getElementById('pin');
-	const closeButton = document.getElementsByClassName('closeButton')[0];
-
-	const inputDice = getInputDice(input);
-	const computerSelected = [];
-	const computerScore = computerMove(inputDice, computerSelected);
-	const playerDice = Array(5);
-	const playerSelected = Array(playerDice.length).fill(false);
-
-	goButton.addEventListener('click', () => {
-		introDiv.classList.add('hidden');
-		gameDiv.classList.remove('hidden');
-	});
-
-	startButton.addEventListener('click', () => {
-		rollButton.disabled = false;
-		startButton.disabled = true;
-
-		updateComputerScore(computerSelected, computerScore);
-	});
-
-	rollButton.addEventListener('click', () => {
-		rollButton.disabled = true;
-		pinButton.disabled = false;
-		playerRoll(inputDice, playerSelected, playerDice); // TODO: Implement overflow
-	});
-
-	pinButton.addEventListener('click', () => {
-		pinButton.disabled = true;
-		rollButton.disabled = false;
-		playerPin(playerSelected, playerDice, computerScore);
-	});
-
-	closeButton.addEventListener('click', () => {
-		toggleError();
-	});
+	if (message) {
+		const messageDiv = errorDiv.getElementsByTagName('p')[0];
+		messageDiv.textContent = message;
+	}
 }
 
-function playerRoll(inputDice, playerSelected, playerDice) {
-	const numUnpinned = playerSelected.reduce((sum, selected) => {
-		return selected ? sum : sum + 1;
-	}, 0);
+function getInputDice(input) {
+	return input.value ? input.value.split(',').map(value => { return Number(value); }) : [];
+}
 
+function rollDie() {
+	return Math.floor(Math.random() * 6) + 1;
+}
+
+function rollDice(inputDice, amount) {
+	const dice = [];
+
+	if (inputDice && inputDice.length > 0) {
+		if (inputDice.length < amount) {
+			dice.push(...inputDice.splice(0, inputDice.length));
+		} else {
+			dice.push(...inputDice.splice(0, amount));
+		}
+	}
+
+	if (dice.length === amount) {
+		return dice;
+	}
+
+	for (let i = dice.length; i < amount; i++) {
+		dice.push(rollDie());
+	}
+
+	return dice;
+}
+
+function updateBoard(playerDice) {
 	for (let i = 0; i < 5; i++) {
-		if (!playerSelected[i]) {
-			playerDice[i] = rollDie();
-		}
+		const dieDiv = document.getElementById(`die${i}`);
+		dieDiv.textContent = String(playerDice[i]);
 	}
-
-	console.log(playerDice);
-	updateBoard(playerDice, playerSelected);
 }
 
-function playerPin(playerSelected, playerDice, computerScore) {
-	const diceDiv = document.getElementById('dice');
-	let numPinned = 0;
-	
-	diceDiv.childNodes.forEach((dieDiv, i) => {
-		if (dieDiv.classList.contains('pinned') && !dieDiv.classList.contains('fixed')) {
-			playerSelected[i] = true;
-			dieDiv.classList.add('fixed');
-			numPinned += 1;
-		}
-	});
+function updatePlayerScore(playerSelected, playerDice, playerScore) {
+	const playerScoreDiv = document.getElementById('playerScore');
+	playerScoreDiv.textContent = `You: [${playerDice.filter((die, i) => { return playerSelected[i]; })}] = ${playerScore}`;
+}
 
-	if (numPinned == 0) {
-		toggleError('Choose at least one die to pin!');
-		
-		const rollButton = document.getElementById('roll');
-		const pinButton = document.getElementById('pin');
-		rollButton.disabled = true;
-		pinButton.disabled = false;
-	} else {
-		const playerScore = playerDice.reduce((sum, value, i) => {
-			return playerSelected[i] ? (value === 3 ? sum : sum + value) : sum;
-		}, 0);
-
-		diceDiv.childNodes.forEach((dieDiv, i) => {
-			if (!dieDiv.classList.contains('pinned')) {
-				dieDiv.textContent = '';
-			}
-		});
-
-		updatePlayerScore(playerSelected, playerDice, playerScore);
-
-		if (!playerSelected.includes(false)) {
-			gameOver(playerScore, computerScore);
-		}
-	}
+function updateComputerScore(computerSelected, computerScore) {
+	const computerScoreDiv = document.getElementById('computerScore');
+	computerScoreDiv.textContent = `Computer: [${computerSelected}] = ${computerScore}`;
 }
 
 function gameOver(playerScore, computerScore) {
 	const resultDiv = document.getElementById('result');
 	const resultMessage = document.getElementById('resultMessage');
 
-	if (playerScore == computerScore) {
+	if (playerScore === computerScore) {
 		resultMessage.textContent = 'Tie :/';
 		resultDiv.classList.add('tie');
 	} else if (playerScore > computerScore) {
@@ -117,24 +74,6 @@ function gameOver(playerScore, computerScore) {
 
 	const rollButton = document.getElementById('roll');
 	rollButton.disabled = true;
-}
-
-function updateBoard(playerDice, playerSelected) {
-	for (let i = 0; i < 5; i++) {
-		const dieDiv = document.getElementById(`die${i}`);
-		dieDiv.textContent = String(playerDice[i]);
-	}
-}
-
-function updatePlayerScore(playerSelected, playerDice, playerScore) {
-	const playerScoreDiv = document.getElementById('playerScore');
-	playerScoreDiv.textContent = `You: [${playerDice.filter((die, i) => { return playerSelected[i] })}] = ${playerScore}`;
-}
-
-function updateComputerScore(computerSelected, computerScore) {
-	const computerScoreDiv = document.getElementById('computerScore');
-	computerScoreDiv.textContent = `Computer: [${computerSelected}] = ${computerScore}`;
-
 }
 
 function computerMove(inputDice, computerSelected) {
@@ -154,34 +93,53 @@ function computerMove(inputDice, computerSelected) {
 	return computerScore;
 }
 
-function rollDice(inputDice, amount) {
-	let dice = [];
-
-	if (inputDice && inputDice.length > 0) {
-		if (inputDice.length < amount) {
-			dice.push(...inputDice.splice(0, inputDice.length));
-		} else {
-			dice.push(...inputDice.splice(0, amount));
+function playerRoll(inputDice, playerSelected, playerDice) {
+	for (let i = 0; i < 5; i++) {
+		if (!playerSelected[i]) {
+			playerDice[i] = rollDie();
 		}
 	}
 
-	if (dice.length == amount) {
-		return dice;
-	}
-
-	for (let i = dice.length; i < amount; i++) {
-		dice.push(rollDie());
-	}
-
-	return dice;
+	console.log(playerDice);
+	updateBoard(playerDice);
 }
 
-function rollDie() {
-	return Math.floor(Math.random() * 6) + 1;
-}
+function playerPin(playerSelected, playerDice, computerScore) {
+	const diceDiv = document.getElementById('dice');
+	let numPinned = 0;
+	
+	diceDiv.childNodes.forEach((dieDiv, i) => {
+		if (dieDiv.classList.contains('pinned') && !dieDiv.classList.contains('fixed')) {
+			playerSelected[i] = true;
+			dieDiv.classList.add('fixed');
+			numPinned += 1;
+		}
+	});
 
-function getInputDice(input) {
-	return input.value ? input.value.split(',').map(value => { return Number(value) }) : [];
+	if (numPinned === 0) {
+		toggleError('Choose at least one die to pin!');
+		
+		const rollButton = document.getElementById('roll');
+		const pinButton = document.getElementById('pin');
+		rollButton.disabled = true;
+		pinButton.disabled = false;
+	} else {
+		const playerScore = playerDice.reduce((sum, value, i) => {
+			return playerSelected[i] ? (value === 3 ? sum : sum + value) : sum;
+		}, 0);
+
+		diceDiv.childNodes.forEach((dieDiv) => {
+			if (!dieDiv.classList.contains('pinned')) {
+				dieDiv.textContent = '';
+			}
+		});
+
+		updatePlayerScore(playerSelected, playerDice, playerScore);
+
+		if (!playerSelected.includes(false)) {
+			gameOver(playerScore, computerScore);
+		}
+	}
 }
 
 function drawBoard() {
@@ -196,7 +154,7 @@ function drawBoard() {
 		const dieDiv = document.createElement('div');
 		dieDiv.id = `die${i}`;
 		dieDiv.classList.add('die');
-		dieDiv.style.border = 'medium solid black'
+		dieDiv.style.border = 'medium solid black';
 
 		dieDiv.addEventListener('click', () => {
 			const startButton = document.getElementById('start');
@@ -266,17 +224,54 @@ function drawBoard() {
 	gameDiv.appendChild(resultDiv);
 }
 
-function toggleError(message) {
-	const errorDiv = document.getElementById('error-message')
-	errorDiv.classList.toggle('hidden');
+function startGame() {
+	drawBoard();
 
-	if (message) {
-		const messageDiv = errorDiv.getElementsByTagName('p')[0];
-		messageDiv.textContent = message;
-	}
+	const gameDiv = document.getElementById('game');
+	const introDiv = document.getElementById('intro');
+	const input = document.getElementById('diceValues');
+	const goButton = introDiv.getElementsByTagName('button')[0];
+	const startButton = document.getElementById('start');
+	const rollButton = document.getElementById('roll');
+	const pinButton = document.getElementById('pin');
+	const closeButton = document.getElementsByClassName('closeButton')[0];
+
+	const inputDice = getInputDice(input);
+	const computerSelected = [];
+	const computerScore = computerMove(inputDice, computerSelected);
+	const playerDice = Array(5);
+	const playerSelected = Array(playerDice.length).fill(false);
+
+	goButton.addEventListener('click', () => {
+		introDiv.classList.add('hidden');
+		gameDiv.classList.remove('hidden');
+	});
+
+	startButton.addEventListener('click', () => {
+		rollButton.disabled = false;
+		startButton.disabled = true;
+
+		updateComputerScore(computerSelected, computerScore);
+	});
+
+	rollButton.addEventListener('click', () => {
+		rollButton.disabled = true;
+		pinButton.disabled = false;
+		playerRoll(inputDice, playerSelected, playerDice); // TODO: Implement overflow
+	});
+
+	pinButton.addEventListener('click', () => {
+		pinButton.disabled = true;
+		rollButton.disabled = false;
+		playerPin(playerSelected, playerDice, computerScore);
+	});
+
+	closeButton.addEventListener('click', () => {
+		toggleError();
+	});
 }
 
-document.addEventListener('DOMContentLoaded', (event) => { 
+document.addEventListener('DOMContentLoaded', () => { 
 	toggleError();
 	startGame();
 });
